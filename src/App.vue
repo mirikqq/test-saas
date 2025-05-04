@@ -120,6 +120,10 @@ const handleMarkInput = (value: string, profile: Profile): void => {
     .profile-data {
         position: relative;
 
+        &:not(:first-child) {
+            margin-top: 1rem;
+        }
+
         .is-invalid {
             &:deep(.el-input__wrapper) {
                 border: 1px solid red;
