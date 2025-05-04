@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ElButton, ElInput, ElSelect, ElOption } from 'element-plus';
 import { useProfileStore } from './store/useProfilesStore';
-import type {Profile} from "./types/profiles.type.ts";
+import type { Profile } from "./types/profiles.type.ts";
 
 const store = useProfileStore();
 
@@ -39,7 +39,7 @@ const handleMarkInput = (value: string, profile: Profile): void => {
                     </g>
                 </svg>
             </span>
-            <p>Для указания нескольких методов для одной пары логин/пароль используйте разделитель ;</p>
+            <p>Для указания нескольких меток для одной пары логин/пароль используйте разделитель ;</p>
         </div>
         <div class="profiles">
             <div class="profiles-titles">
@@ -50,13 +50,19 @@ const handleMarkInput = (value: string, profile: Profile): void => {
             </div>
             <div class="profiles-data">
                 <div class="profile-data" v-for="(profile, index) in store.profiles">
-                    <ElInput :maxlength="50" @input="(value) => handleMarkInput(value, profile)" v-model="profile.mark" placeholder="Значение" />
+                    <ElInput :maxlength="50" @input="(value) => handleMarkInput(value, profile)" v-model="profile.mark"
+                        placeholder="Значение" />
                     <ElSelect v-model="profile.type">
                         <ElOption label="LDAP" value="ldap"></ElOption>
                         <ElOption label="Local" value="local"></ElOption>
                     </ElSelect>
-                    <ElInput type="text" :maxlength="100" placeholder="Значение" v-model="profile.login" />
-                    <ElInput type="password" placeholder="Значение" v-if="profile.type === 'local'" :maxlength="100" v-model="profile.password" />
+                    <ElInput type="text" :maxlength="100" placeholder="Значение" v-model="profile.login"
+                        :class="{ 'is-invalid': store.errors[index]?.login }"
+                        @blur="store.validateFields(profile, index)" />
+
+                    <ElInput type="password" placeholder="Значение" :maxlength="100" v-if="profile.type === 'local'"
+                        v-model="profile.password" :class="{ 'is-invalid': store.errors[index]?.password }"
+                        @blur="store.validateFields(profile, index)" />
                     <ElButton class="profile-remove" @click="store.removeProfile(index)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                             <path fill="#000000"
@@ -113,6 +119,13 @@ const handleMarkInput = (value: string, profile: Profile): void => {
 
     .profile-data {
         position: relative;
+
+        .is-invalid {
+            &:deep(.el-input__wrapper) {
+                border: 1px solid red;
+            }
+        }
+
 
         .profile-remove {
             position: absolute;

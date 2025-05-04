@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import type { Profile } from '../types/profiles.type'
-import { ref, type Ref } from 'vue'
+import { ref, type Ref, computed } from 'vue'
 
 export const useProfileStore = defineStore('profiles', () => {
-    const profiles: Ref<Profile[]> = ref([])
+    const profiles: Ref<Profile[]> = ref([]);
+    const errors: Ref<Record<number, Partial<Record<RequiredField, boolean>>>> = ref({});
 
     const addProfile = () => {
         return profiles.value.push({
@@ -11,18 +12,73 @@ export const useProfileStore = defineStore('profiles', () => {
             type: 'local',
             login: '',
             password: ''
-        })
-    }
+        });
+    };
 
+    const requiredFields = ["login", "password"] as const;
+    type RequiredField = typeof requiredFields[number];
 
-    // profile should have a unique id, but its test task..
+    const validationRules: Record<RequiredField, { minLength: number; maxLength: number }> = {
+        login: { minLength: 1, maxLength: 100 },
+        password: { minLength: 1, maxLength: 100 }
+    };
+
+    const validateFields = (profile: Profile, index: number) => {
+        const newErrors: Partial<Record<RequiredField, boolean>> = {};
+
+        requiredFields.forEach((field) => {
+            const value = profile[field];
+            const rules = validationRules[field];
+
+            const isInvalid = typeof value !== 'string'
+                || value.length < rules.minLength
+                || value.length > rules.maxLength;
+
+            if (isInvalid) newErrors[field] = true;
+        });
+
+        errors.value[index] = newErrors;
+        return { invalidFields: Object.keys(newErrors) };
+    };
+
     const removeProfile = (index: number) => {
-        return profiles.value.splice(index, 1)
-    }
+        return profiles.value.splice(index, 1);
+    };
+
+    const validProfiles = computed(() => {
+        return profiles.value.filter((profile, index) => {
+            const profileErrors = errors.value[index];
+            return !Object.keys(profileErrors || {}).length; // Проверяем на отсутствие ошибок
+        });
+    });
 
     return {
         profiles,
+        validProfiles,
         addProfile,
-        removeProfile
+        removeProfile,
+        validateFields,
+        errors
+    };
+}, {
+    persist: {
+        key: 'profiles',
+        storage: localStorage,
+        serializer: {
+            serialize: (state) => {
+                const validProfiles = state.profiles.filter((profile: Profile, index: number) => {
+                    const errors = state.errors?.[index];
+                    return !errors || Object.keys(errors).length === 0;
+                });
+                return JSON.stringify({ profiles: validProfiles });
+            },
+            deserialize: (value) => {
+                const parsed = JSON.parse(value);
+                return {
+                    profiles: parsed.profiles || [],
+                    errors: {}
+                };
+            }
+        }
     }
-})
+});
