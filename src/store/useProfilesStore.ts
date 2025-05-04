@@ -30,6 +30,8 @@ export const useProfileStore = defineStore('profiles', () => {
             const value = profile[field];
             const rules = validationRules[field];
 
+            if (field === "password" && profile.type === "ldap") return
+
             const isInvalid = typeof value !== 'string'
                 || value.length < rules.minLength
                 || value.length > rules.maxLength;
