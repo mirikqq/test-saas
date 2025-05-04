@@ -46,7 +46,7 @@ export const useProfileStore = defineStore('profiles', () => {
     };
 
     const validProfiles = computed(() => {
-        return profiles.value.filter((profile, index) => {
+        return profiles.value.filter((_, index) => {
             const profileErrors = errors.value[index];
             return !Object.keys(profileErrors || {}).length; // Проверяем на отсутствие ошибок
         });
@@ -66,7 +66,7 @@ export const useProfileStore = defineStore('profiles', () => {
         storage: localStorage,
         serializer: {
             serialize: (state) => {
-                const validProfiles = state.profiles.filter((profile: Profile, index: number) => {
+                const validProfiles = state.profiles.filter((_: Profile, index: number) => {
                     const errors = state.errors?.[index];
                     return !errors || Object.keys(errors).length === 0;
                 });
